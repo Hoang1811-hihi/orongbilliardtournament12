@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Xếp Hạng Người Chơi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #000; /* Nền màu đen */
+            color: #fff; /* Chữ màu trắng */
+        }
+
+        h1, h2 {
+            color: #fff; /* Chữ tiêu đề màu trắng */
+            text-align: center; /* Căn giữa tiêu đề */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #444; /* Màu nền cho hàng chẵn */
+        }
+
+        form {
+            margin-top: 20px;
+            text-align: center; /* Căn giữa form */
+        }
+
+        input, select, button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ổ RỒNG BILLIARD TOURNAMENT</h1> <!-- Tiêu đề mới -->
+    <h2>Bảng Xếp Hạng Người Chơi</h2>
+    <table id="bangXepHang">
+        <tr>
+            <th>Tên Người Chơi</th>
+            <th>Điểm</th>
+        </tr>
+        <tr>
+            <td>Hoàng</td>
+            <td class="diem">0</td>
+        </tr>
+        <tr>
+            <td>Gia</td>
+            <td class="diem">0</td>
+        </tr>
+        <tr>
+            <td>Minh</td>
+            <td class="diem">0</td>
+        </tr>
+        <tr>
+            <td>Nguyên</td>
+            <td class="diem">0</td>
+        </tr>
+    </table>
+
+    <h2>Thêm trận đấu mới</h2>
+    <form id="formTranhDau">
+        <select id="thang">
+            <option value="0">Chọn người thắng</option>
+            <option value="0">Hoàng</option>
+            <option value="1">Gia</option>
+            <option value="2">Minh</option>
+            <option value="3">Nguyên</option>
+        </select>
+        <select id="thua">
+            <option value="0">Chọn người thua</option>
+            <option value="0">Hoàng</option>
+            <option value="1">Gia</option>
+            <option value="2">Minh</option>
+            <option value="3">Nguyên</option>
+        </select>
+        <input type="text" id="tiSo" placeholder="Tỉ Số (ví dụ: 2 - 1)" required>
+        <button type="submit">Thêm trận đấu</button>
+        <button type="button" id="resetBtn">Reset</button> <!-- Nút Reset -->
+    </form>
+
+    <h2>Lịch Sử Đấu</h2>
+    <table id="lichSuDau">
+        <tr>
+            <th>Người Thắng</th>
+            <th>Người Thua</th>
+            <th>Tỉ Số</th>
+        </tr>
+    </table>
+
+    <script>
+        const tenNguoiChoi = ['Hoàng', 'Gia', 'Minh', 'Nguyên'];
+        
+        // Khôi phục dữ liệu từ Local Storage khi tải trang
+        function loadData() {
+            // Tải điểm số
+            const scores = JSON.parse(localStorage.getItem('scores')) || [0, 0, 0, 0];
+            scores.forEach((score, index) => {
+                document.querySelectorAll('.diem')[index].textContent = score;
+            });
+
+            // Tải lịch sử đấu
+            const history = JSON.parse(localStorage.getItem('history')) || [];
+            const lichSuTable = document.getElementById('lichSuDau');
+
+            history.forEach(match => {
+                const newRow = lichSuTable.insertRow(-1);
+                newRow.insertCell(0).textContent = match.winner;
+                newRow.insertCell(1).textContent = match.loser;
+                newRow.insertCell(2).textContent = match.score;
+            });
+        }
+
+        document.getElementById('formTranhDau').addEventListener('submit', function(event) {
+            event.preventDefault(); // Ngăn chặn hành động mặc định của form
+
+            const nguoiThang = parseInt(document.getElementById('thang').value);
+            const nguoiThua = parseInt(document.getElementById('thua').value);
+            const tiSo = document.getElementById('tiSo').value.split(' - ').map(Number);
+            
+            if (tiSo.length !== 2 || nguoiThang < 0 || nguoiThang > 3 || nguoiThang === nguoiThua) {
+                alert('Vui lòng nhập tỉ số hợp lệ, chọn người thắng và người thua khác nhau.');
+                return;
+            }
+
+            const diemThang = Math.max(tiSo[0], tiSo[1]) - Math.min(tiSo[0], tiSo[1]);
+
+            // Cập nhật điểm cho người thắng
+            const diemCell = document.querySelectorAll('.diem')[nguoiThang];
+            diemCell.textContent = parseInt(diemCell.textContent) + diemThang;
+
+            // Cập nhật lịch sử đấu
+            const lichSuTable = document.getElementById('lichSuDau');
+            const newRow = lichSuTable.insertRow(-1);
+            newRow.insertCell(0).textContent = tenNguoiChoi[nguoiThang];
+            newRow.insertCell(1).textContent = tenNguoiChoi[nguoiThua];
+            newRow.insertCell(2).textContent = tiSo.join(' - ');
+
+            // Lưu dữ liệu vào Local Storage
+            const scores = Array.from(document.querySelectorAll('.diem')).map(cell => parseInt(cell.textContent));
+            localStorage.setItem('scores', JSON.stringify(scores));
+
+            const history = JSON.parse(localStorage.getItem('history')) || [];
+            history.push({ winner: tenNguoiChoi[nguoiThang], loser: tenNguoiChoi[nguoiThua], score: tiSo.join(' - ') });
+            localStorage.setItem('history', JSON.stringify(history));
+
+            // Xóa dữ liệu trong form sau khi thêm
+            document.getElementById('formTranhDau').reset();
+        });
+
+        // Chức năng reset toàn bộ kết quả
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            // Đặt lại điểm số
+            document.querySelectorAll('.diem').forEach(cell => {
+                cell.textContent = '0';
+            });
+
+            // Xóa lịch sử đấu
+            const lichSuTable = document.getElementById('lichSuDau');
+            while (lichSuTable.rows.length > 1) {
+                lichSuTable.deleteRow(1);
+            }
+
+            // Đặt lại Local Storage
+            localStorage.removeItem('scores');
+            localStorage.removeItem('history');
+
+            // Đặt lại form
+            document.getElementById('formTranhDau').reset();
+        });
+
+        // Gọi hàm loadData khi trang được tải
+        loadData();
+    </script>
+</body>
+</html>
